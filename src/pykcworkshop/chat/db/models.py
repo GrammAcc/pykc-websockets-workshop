@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from pykcworkshop import utils
+from pykcworkshop.chat import constants
 from pykcworkshop.chat.db.columns import UTCDateTime
 
 load_dotenv()
@@ -65,7 +66,7 @@ class Room(BaseModel):
     __tablename__ = "room"
 
     id: Mapped[str] = mapped_column(primary_key=True, autoincrement=False)
-    name: Mapped[str] = mapped_column(String(16, collation="NOCASE"))
+    name: Mapped[str] = mapped_column(String(constants.NAME_LENGTH, collation="NOCASE"))
     owner_id: Mapped[int] = mapped_column(
         ForeignKey("user.id", onupdate="CASCADE", ondelete="CASCADE")
     )
@@ -85,7 +86,9 @@ class User(BaseModel):
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(16, collation="NOCASE"), unique=True)
+    name: Mapped[str] = mapped_column(
+        String(constants.NAME_LENGTH, collation="NOCASE"), unique=True
+    )
     hashed_token_id: Mapped[Optional[str]] = mapped_column(
         ForeignKey("hashed_token.id", onupdate="CASCADE", ondelete="CASCADE")
     )

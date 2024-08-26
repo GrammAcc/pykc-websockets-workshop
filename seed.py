@@ -26,7 +26,7 @@ async def seed_db():
                     - datetime.timedelta(seconds=(i * 2)),
                 )
             )
-            for i in range(1000)
+            for i in range(10000)
         ]
         await asyncio.gather(*futures)
         await session.commit()
