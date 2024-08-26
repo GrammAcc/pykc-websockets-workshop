@@ -117,7 +117,7 @@ export async function connectToRoom(roomID) {
     }
   });
   chatHistorySocket.addEventListener("open", () => {
-    sendHistoryRequest(20);
+    sendHistoryRequest(10);
   });
 
   document.querySelector("#room-info-root").classList.remove("hidden");
@@ -284,10 +284,10 @@ onPageLoad(() => {
   msgList.addEventListener("scroll", (_ev) => {
     if (msgList.scrollTop === 0) {
       if (connections.chatHistory !== null) {
-        sendHistoryRequest(10);
+        sendHistoryRequest(5);
       }
     }
-    setTimeout(() => {}, 500);
+    setTimeout(() => {}, 400);
   });
 
   /** @type {HTMLDivElement} */
