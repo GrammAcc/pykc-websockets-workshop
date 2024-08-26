@@ -47,11 +47,11 @@ export async function createRoom(roomName) {
 }
 
 /**
- * @param {string} roomId The hash of the room to join.
+ * @param {string} roomID The hash of the room to join.
  * @returns {Promise<boolean>} true if user was successfully added to room else false.
  */
-export async function joinRoom(roomId) {
-  const res = await fetch(`/chat/api/v1/room/${roomId}/join`, {
+export async function joinRoom(roomID) {
+  const res = await fetch(`/chat/api/v1/room/${roomID}/join`, {
     method: "PUT",
     headers: {
       ...authHeaders(),
@@ -59,13 +59,8 @@ export async function joinRoom(roomId) {
     },
   });
   if (res.status === 200) {
-    const { room_hash, room_name } = await (
-      await fetch(`/chat/api/v1/room/${roomId}`, { headers: authHeaders() })
-    ).json();
-
-    const roomData = { roomID: room_hash, roomName: room_name };
     repopulateJoinedRoomList();
-    connectToRoom(roomData.roomID);
+    connectToRoom(roomID);
     return true;
   } else {
     return false;

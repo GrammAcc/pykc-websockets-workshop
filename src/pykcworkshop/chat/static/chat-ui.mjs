@@ -36,6 +36,9 @@ export function isChatroomConnected() {
 }
 
 export async function connectToRoom(roomID) {
+  if (isChatroomConnected()) {
+    disconnectFromRoom();
+  }
   document.querySelector("#chatroom-ui-root").classList.remove("hidden");
   connectedRoomID = roomID;
 
@@ -59,6 +62,7 @@ export async function connectToRoom(roomID) {
   if (connections.chatMessage !== null) {
     connections.chatMessage.close();
   }
+  oldestMsgTimestamp = new Date().getTime();
   const chatMessageSocket = new WebSocket(`/chat/api/v1/room/${roomID}/chat-message`, [
     `Bearer${sessionToken()}`,
     `csrf${csrfToken()}`,
@@ -280,9 +284,7 @@ onPageLoad(() => {
   msgList.addEventListener("scroll", (_ev) => {
     if (msgList.scrollTop === 0) {
       if (connections.chatHistory !== null) {
-        connections.chatHistory.send(
-          JSON.stringify({ timestamp: oldestMsgTimestamp, chunk_size: 10 }),
-        );
+        sendHistoryRequest(10);
       }
     }
     setTimeout(() => {}, 500);
