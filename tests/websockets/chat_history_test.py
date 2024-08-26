@@ -35,7 +35,7 @@ async def generate_message_history():
 
     await tests.helpers.seed_db()
     async with chat.db.get_session() as session:
-        CREATOR_ID = (await chat.db.get_user_by_id(session, 2)).id
+        CREATOR_ID = (await chat.db.get_user_by_name(session, "Testy")).id
         history_room = await chat.db.create_room(
             session, room_name=HISTORY_ROOM_NAME, creator_id=CREATOR_ID
         )
@@ -93,3 +93,40 @@ async def test_result_ordering(fixt_ws_headers_testy, fixt_history_url):
         ts = datetime.datetime.fromisoformat(msg["timestamp"])
         assert ts < prev_timestamp
         prev_timestamp = ts
+
+
+async def test_result_is_older_than_ref_timestamp(
+    fixt_ws_headers_testy, fixt_history_url, fixt_testy, fixt_history_room
+):
+    """The chat history websocket should only return results that are older than the reference
+    timestamp. Since these are in reverse-chronological order, this means that the first
+    result in the returned array should be the newest message that is older than the reference
+    timestamp."""
+
+    testy = await fixt_testy()
+    history_room = await fixt_history_room()
+    newer = utils.now()
+    older = newer - datetime.timedelta(seconds=1)
+    async with chat.db.get_session() as session:
+        newer_message = await chat.db.create_chat_message(
+            session,
+            author_id=testy.id,
+            room_id=history_room.id,
+            content="Newer message",
+            timestamp=newer,
+        )
+        older_message = await chat.db.create_chat_message(
+            session,
+            author_id=testy.id,
+            room_id=history_room.id,
+            content=newer_message.content + "something to ensure these are different.",
+            timestamp=older,
+        )
+        await session.commit()  # populate PKs.
+
+    conn = await websockets.connect(fixt_history_url, extra_headers=fixt_ws_headers_testy)
+    await conn.send(json.dumps({"timestamp": newer.timestamp() * 1000, "chunk_size": 1}))
+    msg = await conn.recv()
+    await conn.close()
+    data = json.loads(msg)
+    assert data[0]["content"] == older_message.content
