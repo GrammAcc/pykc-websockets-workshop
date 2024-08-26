@@ -49,8 +49,7 @@ export function makeCreateUserModal(validationSocket) {
   const validationMsgEl = makeErrMsgEl();
   validationMsgEl.classList.remove("hidden");
   modal.appendChild(validationMsgEl);
-  submitBtn.setAttribute("disabled", true);
-  let isFormValid = false;
+  let isFormValid = true;
   validationSocket.addEventListener("message", (ev) => {
     /** @type {{form_data: {user_name: string}, validation_failed: Boolean, failure_reason: string}} */
     const data = JSON.parse(ev.data);
@@ -157,8 +156,7 @@ export function makeCreateRoomModal(validationSocket) {
   cancelBtn.classList.add("ml-auto");
   btnLayout.appendChild(cancelBtn);
   modal.appendChild(btnLayout);
-  submitBtn.setAttribute("disabled", true);
-  let isFormValid = false;
+  let isFormValid = true;
   const validationMsgEl = makeErrMsgEl();
   validationMsgEl.classList.remove("hidden");
   modal.appendChild(validationMsgEl);
