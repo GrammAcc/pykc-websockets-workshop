@@ -1,0 +1,170 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pykcworkshop"
+dynamic = ["version"]
+description = "Python Kansas City Summer 2024 Workshop Project"
+authors = [{name = "GrammAcc"}]
+maintainers = [{name = "GrammAcc"}]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "quart",
+    "sqlalchemy[asyncio]",
+    "aiosqlite",
+    "python-dotenv",
+    "pyjwt",
+]
+
+
+[project.optional-dependencies]
+dev = ["hatch"]
+
+[tool.hatch.version]
+path = "src/pykcworkshop/__init__.py"
+
+
+[tool.hatch.build]
+ignore-vcs = true
+include = ["*.json", "py.typed"]
+
+
+# This is needed for hatchling to find the version in the package __init__.py file.
+# See https://github.com/pypa/hatch/issues/981#issuecomment-1743631364
+[tool.hatch.build.targets.sdist]
+include = ["src"]
+
+# This is needed for hatchling to find the version in the package __init__.py file.
+# See https://github.com/pypa/hatch/issues/981#issuecomment-1743631364
+[tool.hatch.build.targets.wheel]
+packages = ["src/pykcworkshop"]
+
+
+[tool.hatch.envs.default]
+python = "3.12"
+dependencies = [
+    "pytest",
+    "pytest-cov",
+    # See: https://github.com/pytest-dev/pytest-asyncio/issues/706
+    "pytest-asyncio==0.21.2",
+    "websockets",
+    "quart",
+    "sqlalchemy[asyncio]",
+    "aiosqlite",
+    "python-dotenv",
+    "pyjwt",
+    "black",
+    "flake8",
+    "isort",
+    "mypy",
+]
+
+
+[tool.hatch.envs.default.scripts]
+
+serve = "hypercorn --config server.toml 'pykcworkshop:create_app()'"
+typecheck = "mypy -p pykcworkshop"
+format = [
+    "isort --atomic .",
+    "black .",
+]
+lint = "flake8 src tests docs"
+test = [
+    "hypercorn --config server.toml 'pykcworkshop:test_chat_app()' &",
+    "sleep 1",
+    "- pytest {args}",
+    "hatch run killserver",
+]
+cov = [
+    "hypercorn --config server.toml 'pykcworkshop:test_chat_app()' &",
+    "sleep 1",
+    "- pytest --cov-config=pyproject.toml --cov-report html:htmlcov --cov=pykcworkshop",
+    "hatch run killserver",
+]
+ci = [
+    "hatch run test",
+    "hatch run cov",
+    "hatch run docs:test",
+    "hatch run typecheck",
+    "hatch run lint",
+]
+all = [
+    "hatch run format",
+    "- hatch run frontend:format",
+    "- hatch run frontend:build",
+    "- hatch run test",
+    "- hatch run cov",
+    "- hatch run docs:test",
+    "- hatch run typecheck",
+    "- hatch run lint",
+]
+
+
+[tool.hatch.envs.default.overrides]
+platform.linux.scripts = [
+    "killserver=pkill hypercorn",
+]
+platform.macos.scripts = [
+    "killserver=pkill -f hypercorn",
+]
+platform.windows.scripts = [
+    "test=python windows_test_suite.py",
+    "cov=python windows_cov_suite.py",
+    "serve=hypercorn --config server.toml windows_app.py",
+]
+
+
+[tool.hatch.envs.docs]
+description = "Documentation generation and utilities"
+dependencies = [
+    "pdoc",
+    "pytest",
+]
+
+[tool.hatch.envs.docs.scripts]
+build = "pdoc 'pykcworkshop' --docformat='google' --output-directory='docs/site'"
+serve = "python docs/serve.py"
+test = "python docs/run_doctests.py"
+
+[tool.hatch.envs.frontend]
+description = "Utilities for building/deploying the frontend. Requires Node.js"
+detached = true
+
+[tool.hatch.envs.frontend.scripts]
+build = "npx tailwindcss -i ./tailwind.css -o ./src/pykcworkshop/chat/static/chat.css"
+format = "npx prettier --write ./src/**/*.mjs"
+
+
+[tool.pytest.ini_options]
+log_file="testsuite.log"
+log_file_level="WARNING"
+addopts = "--import-mode=importlib --show-capture=no"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+exclude_also = [
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+omit = ["utils.py", "helpers.py", "__init__.py", "logs.py", "columns.py"]
+
+
+[tool.isort]
+profile = "black"
+skip_gitignore = true
+
+[tool.mypy]
+check_untyped_defs = true
+
+[tool.black]
+line-length = 100

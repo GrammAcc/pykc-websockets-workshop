@@ -1,0 +1,35 @@
+# Postgres Database Service.
+# Run with: `{podman|docker}-compose -f chat-db-compose.yml up --build --force-recreate --remove-orphans --no-cache --detach`
+
+services:
+  postgres:
+    # Official Postgres image from DockerHub.
+    # The registry prefix 'docker.io' may be required for alternative container engines
+    # such as podman unless the user configures a list of registries to be searched.
+    # An incorrect or intentionally malicious user configuration can result in
+    # security vulnerabilities if the wrong prefix is selected on the user's machine
+    # resulting in the possiblity of a malicious image spoofing an official image, which
+    # can potentially give an attacker full root access to the server depending on the
+    # configuration. Including the prefix in the image key here prevents the container
+    # engine from searching any user-defined registries.
+    # See https://man.archlinux.org/man/containers-registries.conf.5.en#Short-Name_Aliasing
+    # for more information.
+    image: 'docker.io/postgres:16.2'
+    container_name: test-pykcworkshop-db
+    command: postgres
+    ports:
+      - 5432:5432
+
+    environment:
+      # The Postgres user
+      POSTGRES_USER: postgres
+      # The Postgres password
+      POSTGRES_PASSWORD: postgres
+      # The Postgres default database
+      POSTGRES_DB: pykcworkshop_dev
+    # Mapping a volume named "data" to the Postgres data directory
+    volumes:
+      - data:/var/lib/postgresql/data
+
+volumes:
+  data:

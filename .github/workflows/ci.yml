@@ -1,0 +1,46 @@
+# name: atgdnwt CI
+#
+# on:
+#   push:
+#     branches: ["main"]
+#   pull_request:
+#     branches: ["main"]
+#
+# jobs:
+#   linux:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-python@v5
+#         with:
+#           python-version: 3.12
+#       - name: Run Hatch CI
+#         run: |
+#           python genenv.py
+#           source ./gethatch.sh
+#           hatch run ci
+#   macos:
+#     runs-on: macos-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-python@v5
+#         with:
+#           python-version: 3.12
+#       - name: Run Hatch CI
+#         run: |
+#           python genenv.py
+#           source ./gethatch.sh
+#           hatch run ci
+#   windows:
+#     runs-on: windows-latest
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-python@v5
+#         with:
+#           python-version: 3.12
+#       - name: Run Hatch CI
+#         shell: pwsh
+#         run: |
+#           python genenv.py
+#           ./gethatch.ps1
+#           hatch run ci

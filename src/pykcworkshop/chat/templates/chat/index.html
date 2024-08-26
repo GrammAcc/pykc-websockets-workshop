@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta name="robots" content="noindex, nofollow" />
+    <title>GrammAcc's Chat</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="{{url_for('chat.static', filename='chat.css')}}">
+    <script type="module" src="{{url_for('chat.static', filename='index.mjs')}}"></script>
+    <meta name="csrf-token" content="{{ csrf_token }}" />
+  </head>
+  <body>
+    <main>
+      <h1>GrammAcc's Chat</h1>
+      <div class="flex flex-row">
+        <div class="flex flex-row grow justify-start">
+          <div id="login-ui" class="flex flex-row">
+            <button id="login-btn" class="mx-0.5">Sign in...</button>
+            <button id="create-user-btn" class="mx-0.5">New User...</button>
+          </div>
+          <div id="logout-ui" class="hidden">
+            <button id="logout-btn">Sign out...</button>
+          </div>
+        </div>
+        <div id="manage-rooms-ui" class="flex flex-row hidden layout justify-end">
+          <button id="create-room-btn" class="mx-0.5">Create New Room</button>
+          <button id="join-room-btn" class="mx-0.5">Join Room...</button>
+        </div>
+      </div>
+      <div class="flex flex-row">
+        <div id="left-column" class="flex flex-col">
+          <section id="user-info-root" class="flex flex-col layout hidden">
+            <h2>My Info</h2>
+            <div id="user-name-plate"></div>
+            <section id="joined-rooms">
+              <hr/>
+              <p class="font-bold">My Rooms</p>
+              <div id="joined-room-list" class="flex flex-col"></div>
+            </section>
+          </section>
+        </div>
+        <div id="middle-column" class="grow">
+          <section id="chatroom-ui-root" class="flex flex-col min-h-[80vh] px-4 hidden layout">
+            <div class="grow relative">
+              <div id="room-message-list" class="chat-msg-list"></div>
+            </div>
+            <div id="room-message-input-container" class="flex flex-row">
+              <textarea id="room-message-input" class="common-text-input bg-neutral-700 grow" autocapitalize="sentences" maxlength="513" placeholder="start typing a message..."></textarea>
+              <button id="room-message-send-btn">Send</button>
+            </div>
+          </section>
+        </div>
+        <div id="right-column" class="flex flex-col">
+          <section id="room-info-root" class="hidden layout">
+            <h2>Room Info</h2>
+            <div id="room-name-plate" class="ml-auto"></div>
+            <hr/>
+            <p class="font-bold">Room Members</p>
+            <div class="mx-2" id="member-list"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <div id="modal-anchor"></div>
+  </body>
+</html>

@@ -1,0 +1,3 @@
+certfile = "certs/pykcworkshop.pem"
+keyfile = "certs/pykcworkshop-key.pem"
+ca-cert = "certs/rootCA.pem"
