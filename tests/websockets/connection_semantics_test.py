@@ -144,8 +144,12 @@ async def test_121_broadcast(
 
         match fixt_ws_121_endpoints.split("/").pop():
             case "chat-history":
-                await testy_conn.send(json.dumps({"timestamp": timestamp, "chunk_size": 2}))
-                await testier_conn.send(json.dumps({"timestamp": 0, "chunk_size": 2}))
+                await testy_conn.send(
+                    json.dumps({"timestamp": timestamp, "chunk_size": 2, "newer": False})
+                )
+                await testier_conn.send(
+                    json.dumps({"timestamp": 0, "chunk_size": 2, "newer": False})
+                )
             case "form-validation":
                 await testy_conn.send(
                     json.dumps({"type": "chat-message", "form_data": {"content": f"testy_{i}"}})

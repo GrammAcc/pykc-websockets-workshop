@@ -272,7 +272,7 @@ function sendMemberStatus(status) {
 function sendHistoryRequest(chunkSize) {
   if (connections.chatHistory !== null) {
     connections.chatHistory.send(
-      JSON.stringify({ timestamp: oldestMsgTimestamp, chunk_size: chunkSize }),
+      JSON.stringify({ timestamp: oldestMsgTimestamp, chunk_size: chunkSize, newer: false }),
     );
   }
 }

@@ -15,6 +15,8 @@ REFERENCE_TS: int = int(
 
 HISTORY_ROOM_NAME: str = "History Room"
 
+OLDEST_DATETIME: int = datetime.datetime(year=1999, month=12, day=31, tzinfo=datetime.UTC)
+
 
 @pytest.fixture
 async def fixt_history_room():
@@ -46,8 +48,7 @@ async def generate_message_history():
                     author_id=CREATOR_ID,
                     room_id=history_room.id,
                     content=f"Party like it's 1999 plus {i}",
-                    timestamp=datetime.datetime(year=1999, month=12, day=31, tzinfo=datetime.UTC)
-                    + datetime.timedelta(seconds=(i)),
+                    timestamp=(OLDEST_DATETIME + datetime.timedelta(seconds=(i))),
                 )
             )
             for i in range(1000)
@@ -72,19 +73,19 @@ async def test_chunk_size(fixt_ws_headers_testy, fixt_history_url):
     conn = await websockets.connect(fixt_history_url, extra_headers=fixt_ws_headers_testy)
     for chunk in range(100):
         sz = chunk + 1
-        await conn.send(json.dumps({"timestamp": REFERENCE_TS, "chunk_size": sz}))
+        await conn.send(json.dumps({"timestamp": REFERENCE_TS, "chunk_size": sz, "newer": False}))
         msg = await conn.recv()
         data = json.loads(msg)
         assert len(data) == sz
     await conn.close()
 
 
-async def test_result_ordering(fixt_ws_headers_testy, fixt_history_url):
+async def test_older_ordering(fixt_ws_headers_testy, fixt_history_url):
     """The chat-history websocket should give an array of chat messages in
-    reverse-chronological order."""
+    reverse-chronological order when `newer` is False."""
 
     conn = await websockets.connect(fixt_history_url, extra_headers=fixt_ws_headers_testy)
-    await conn.send(json.dumps({"timestamp": REFERENCE_TS, "chunk_size": 100}))
+    await conn.send(json.dumps({"timestamp": REFERENCE_TS, "chunk_size": 100, "newer": False}))
     msg = await conn.recv()
     await conn.close()
     data = json.loads(msg)
@@ -93,6 +94,45 @@ async def test_result_ordering(fixt_ws_headers_testy, fixt_history_url):
         ts = datetime.datetime.fromisoformat(msg["timestamp"])
         assert ts < prev_timestamp
         prev_timestamp = ts
+
+
+async def test_newer_ordering(fixt_ws_headers_testy, fixt_history_url):
+    """The chat-history websocket should give an array of chat messages in
+    chronological order when `newer` is True."""
+
+    conn = await websockets.connect(fixt_history_url, extra_headers=fixt_ws_headers_testy)
+    await conn.send(
+        json.dumps(
+            {"timestamp": OLDEST_DATETIME.timestamp() * 1000, "chunk_size": 100, "newer": True}
+        )
+    )
+    msg = await conn.recv()
+    await conn.close()
+    data = json.loads(msg)
+    prev_timestamp = OLDEST_DATETIME
+    for msg in data:
+        ts = datetime.datetime.fromisoformat(msg["timestamp"])
+        assert ts > prev_timestamp
+        prev_timestamp = ts
+
+
+async def test_newer(fixt_ws_headers_testy, fixt_history_url):
+    """The chat-history websocket should give messages newer than the reference
+    timestamp when the `newer` field is true."""
+
+    conn = await websockets.connect(fixt_history_url, extra_headers=fixt_ws_headers_testy)
+    await conn.send(
+        json.dumps(
+            {"timestamp": OLDEST_DATETIME.timestamp() * 1000, "chunk_size": 100, "newer": True}
+        )
+    )
+    msg = await conn.recv()
+    await conn.close()
+    data = json.loads(msg)
+    first_dt = datetime.datetime.fromisoformat(data[0]["timestamp"])
+    assert first_dt > OLDEST_DATETIME
+    last_dt = datetime.datetime.fromisoformat(data.pop()["timestamp"])
+    assert last_dt == OLDEST_DATETIME + datetime.timedelta(seconds=100)
 
 
 async def test_result_is_older_than_ref_timestamp(
@@ -125,7 +165,9 @@ async def test_result_is_older_than_ref_timestamp(
         await session.commit()  # populate PKs.
 
     conn = await websockets.connect(fixt_history_url, extra_headers=fixt_ws_headers_testy)
-    await conn.send(json.dumps({"timestamp": newer.timestamp() * 1000, "chunk_size": 1}))
+    await conn.send(
+        json.dumps({"timestamp": newer.timestamp() * 1000, "chunk_size": 1, "newer": False})
+    )
     msg = await conn.recv()
     await conn.close()
     data = json.loads(msg)

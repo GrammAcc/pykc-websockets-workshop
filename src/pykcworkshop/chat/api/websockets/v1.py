@@ -134,17 +134,12 @@ async def client_sync_socket(room_token: str):
 async def stream_chat_history(room_token: str):
     """1;1 WebSocket that streams older messages to the client in chunks to
     facilitate features such as infinite scroll and chat history without
-    laggy or clunky interfaces.
-
-    The client will send messages with a reference timestamp and a chunk size.
-    This websocket should return messages containing `chunk_size` chat message
-    objects in reverse chronological order starting from the first chat message
-    in this room that is older than the reference timestamp. The client will
-    send JSON messages with the following structure:
+    laggy or clunky interfaces. The client will send JSON messages with the following structure:
 
         {
             timestamp: int,
             chunk_size: int,
+            newer: bool,
         }
 
     The `timestamp` field is the client's current reference point in the history as a
@@ -155,6 +150,11 @@ async def stream_chat_history(room_token: str):
     The `chunk_size` field is the number of chat messages the client wants. This value is
     suitable for use directly in a `limit` statement for the db query.
 
+    The `newer` field is a boolean field that indicates whether the returned messages should be
+    newer than the reference timestamp (True) or older (False). The results should be in
+    chronological order (asc order) if `newer` is True and reverse chronological order (desc order)
+    if `newer` is False.
+
     The server should send json-encoded messages with the following structure:
 
         {
@@ -163,19 +163,17 @@ async def stream_chat_history(room_token: str):
             timestamp: str,
         }[]
 
-
     The objects are the same structure as the chat-message and direct-message endpoints. The
     only difference is that we are returning an array of these objects instead of a single
     json-serialized object.
 
     The specific messages that are returned should be the newest messages in the db for this
-    chatroom that are older than the reference timestamp. The length of the list/array we
-    return should match the `chunk_size`, and the order of the objects in the array should
-    be reverse-chronological.
+    chatroom that are older than the reference timestamp if `newer` is False, or the oldest messages
+    in the chatroom that are newer than the reference timestamp if `newer` is True. The length of
+    the list/array we return should match the `chunk_size`.
 
-    In other words, this corresponds to a SQL query for messages older than the reference
-    timestamp, ordered by their timestamps descending, and with a limit of
-    `chunk_size`.
+    In other words, this corresponds to a SQL query for messages older|newer than the reference
+    timestamp, ordered by their timestamps descending|ascending, and with a limit of `chunk_size`.
     """
 
     return "NOT FOUND", 404
