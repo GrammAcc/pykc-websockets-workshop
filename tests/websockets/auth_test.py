@@ -13,6 +13,8 @@ async def test_secured_websockets_require_auth(fixt_client, fixt_ws_secured_endp
         await websockets.connect(fixt_ws_secured_endpoints, extra_headers=headers)
     except websockets.exceptions.InvalidStatusCode as e:
         assert e.status_code == 401
+    else:
+        assert False, "Did not raise"
 
 
 async def test_all_websockets_require_csrf(
@@ -33,3 +35,5 @@ async def test_all_websockets_require_csrf(
         await websockets.connect(fixt_ws_all_endpoints, extra_headers=headers)
     except websockets.exceptions.InvalidStatusCode as e:
         assert e.status_code == 401
+    else:
+        assert False, "Did not raise"
