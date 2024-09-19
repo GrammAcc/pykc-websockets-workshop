@@ -35,7 +35,7 @@ async def test_401_with_incorrect_token_format(
 
     url, method = fixt_http_secure_endpoints
     bad_auth_headers = {
-        "Authorization": (await fixt_testy()).hashed_token.token,
+        "Authorization": (await fixt_testy()).token.token,
         "X-CSRF-TOKEN": fixt_http_headers_testy["X-CSRF-TOKEN"],
     }
     res = await getattr(fixt_client, method.lower())(url, headers=bad_auth_headers)

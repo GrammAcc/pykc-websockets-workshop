@@ -8,20 +8,22 @@ import tests
 from pykcworkshop import chat, utils
 
 
-async def test_user_login_basic_usage(fixt_client, fixt_testy, fixt_http_headers_csrf_only):
+async def test_user_login_basic_usage(
+    fixt_client, fixt_testy, fixt_testy_password, fixt_http_headers_csrf_only
+):
     """The user login endpoint should return the user name and hash."""
 
     testy = await fixt_testy()
     res = await fixt_client.post(
         f"{utils.get_domain()}/chat/api/v1/user/login",
-        json={"user_hash": testy.hashed_token.id},
+        json={"user_hash": fixt_testy_password},
         headers=fixt_http_headers_csrf_only,
     )
     assert res.status_code == 200
     data = await res.get_json()
     assert data["user_name"] == testy.name
     assert data["user_id"] == testy.id
-    assert data["user_token"] == testy.hashed_token.token
+    assert data["user_token"] == testy.token.token
 
 
 async def test_user_login_401_when_invalid_jwt(fixt_client, fixt_http_headers_csrf_only):
@@ -41,13 +43,13 @@ async def test_user_login_401_when_expired_jwt(fixt_client, fixt_http_headers_cs
     jwt is expired."""
 
     async with chat.db.get_session() as session:
-        new_user, expired_user_token = await chat.db.create_user(
+        new_user, expired_user_token_password = await chat.db.create_user(
             session, user_name="New User", token_expiration=datetime.timedelta(0)
         )
 
     res = await fixt_client.post(
         f"{utils.get_domain()}/chat/api/v1/user/login",
-        json={"user_hash": expired_user_token.id},
+        json={"user_hash": expired_user_token_password},
         headers=fixt_http_headers_csrf_only,
     )
     assert res.status_code == 401

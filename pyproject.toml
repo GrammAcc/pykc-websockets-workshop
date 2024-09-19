@@ -6,8 +6,8 @@ build-backend = "hatchling.build"
 name = "pykcworkshop"
 dynamic = ["version"]
 description = "Python Kansas City Summer 2024 Workshop Project"
-authors = [{name = "GrammAcc"}]
-maintainers = [{name = "GrammAcc"}]
+authors = [{ name = "GrammAcc" }]
+maintainers = [{ name = "GrammAcc" }]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -16,6 +16,7 @@ dependencies = [
     "aiosqlite",
     "python-dotenv",
     "pyjwt",
+    "argon2-cffi",
 ]
 
 
@@ -66,10 +67,7 @@ dependencies = [
 
 serve = "hypercorn --config server.toml 'pykcworkshop:create_app()'"
 typecheck = "mypy -p pykcworkshop"
-format = [
-    "isort --atomic .",
-    "black .",
-]
+format = ["isort --atomic .", "black ."]
 lint = "flake8 src tests docs"
 test = [
     "hypercorn --config server.toml 'pykcworkshop:test_chat_app()' &",
@@ -103,12 +101,8 @@ all = [
 
 
 [tool.hatch.envs.default.overrides]
-platform.linux.scripts = [
-    "killserver=pkill hypercorn",
-]
-platform.macos.scripts = [
-    "killserver=pkill -f hypercorn",
-]
+platform.linux.scripts = ["killserver=pkill hypercorn"]
+platform.macos.scripts = ["killserver=pkill -f hypercorn"]
 platform.windows.scripts = [
     "test=python windows_test_suite.py",
     "cov=python windows_cov_suite.py",
@@ -118,10 +112,7 @@ platform.windows.scripts = [
 
 [tool.hatch.envs.docs]
 description = "Documentation generation and utilities"
-dependencies = [
-    "pdoc",
-    "pytest",
-]
+dependencies = ["pdoc", "pytest"]
 
 [tool.hatch.envs.docs.scripts]
 build = "pdoc 'pykcworkshop' --docformat='google' --output-directory='docs/site'"
@@ -138,8 +129,8 @@ format = "npx prettier --write ./src/**/*.mjs"
 
 
 [tool.pytest.ini_options]
-log_file="testsuite.log"
-log_file_level="WARNING"
+log_file = "testsuite.log"
+log_file_level = "WARNING"
 addopts = "--import-mode=importlib --show-capture=no"
 asyncio_mode = "auto"
 

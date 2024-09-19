@@ -43,14 +43,20 @@ async def user_login() -> Response:
         return bad_req
     user_hash: str = body["user_hash"]
     try:
+        password, user_id = tokens.parse_login_hash(user_hash)
         async with db.get_session() as session:
-            token: str = await db.get_jwt_by_hash(session, user_hash)
-        user_data = tokens.validate_token(token)
+            user = await db.get_user_by_id(session, user_id)
+        # token column is optional in db. All current users should have a token, but
+        # it's possible we could get one without, so we assert to break the try block
+        # if we can't validate the login.
+        assert user.token is not None
+        tokens.pw_hasher().verify(user.token.password_hash, password)
+        user_data = tokens.validate_token(user.token.token)
         res = jsonify(
             {
                 "user_id": user_data["user_id"],
                 "user_name": user_data["user_name"],
-                "user_token": token,
+                "user_token": user.token.token,
             }
         )
         res.status_code = 200
@@ -60,7 +66,6 @@ async def user_login() -> Response:
             helpers.logger,
             {
                 "msg": "Invalid jwt when logging in user",
-                "user_token_hash": user_hash,
             },
             err=e,
         )
@@ -70,7 +75,6 @@ async def user_login() -> Response:
             helpers.logger,
             {
                 "msg": "Unknown error when logging in user",
-                "user_token_hash": user_hash,
             },
             err=e,
         )
@@ -120,7 +124,7 @@ async def create_new_user_token() -> Response:
     try:
         try:
             async with db.get_session() as session:
-                new_user, new_user_token = await db.create_user(session, user_name=user_name)
+                new_user, new_user_password = await db.create_user(session, user_name=user_name)
                 await session.commit()
         except IntegrityError as e:
             constraint_violation = db.parse_constraint_error(e)
@@ -137,7 +141,7 @@ async def create_new_user_token() -> Response:
                 )
                 raise e
         else:
-            res = jsonify({"user_hash": new_user_token.id, "user_name": new_user.name})
+            res = jsonify({"user_hash": new_user_password, "user_name": new_user.name})
             res.status_code = 201
             return res
     except Exception as e:  # pragma: no cover

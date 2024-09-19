@@ -117,6 +117,11 @@ async def fixt_testy():
 
 
 @pytest.fixture
+async def fixt_testy_password():
+    return tests.helpers.testy_password()
+
+
+@pytest.fixture
 async def fixt_testier():
     async def _():
         async with chat.db.get_session() as session:

@@ -11,21 +11,21 @@ async def fixt_ws_headers_csrf_only():
 @pytest.fixture
 async def fixt_ws_headers_testy(fixt_testy):
     return {
-        "Sec-WebSocket-Protocol": f"wamp, Bearer{(await fixt_testy()).hashed_token.token}, csrf{chat.tokens.generate_csrf()}"
+        "Sec-WebSocket-Protocol": f"wamp, Bearer{(await fixt_testy()).token.token}, csrf{chat.tokens.generate_csrf()}"
     }
 
 
 @pytest.fixture
 async def fixt_ws_headers_testier(fixt_testier):
     return {
-        "Sec-WebSocket-Protocol": f"wamp, Bearer{(await fixt_testier()).hashed_token.token}, csrf{chat.tokens.generate_csrf()}"
+        "Sec-WebSocket-Protocol": f"wamp, Bearer{(await fixt_testier()).token.token}, csrf{chat.tokens.generate_csrf()}"
     }
 
 
 @pytest.fixture
 async def fixt_ws_headers_testiest(fixt_testiest):
     return {
-        "Sec-WebSocket-Protocol": f"wamp, Bearer{(await fixt_testiest()).hashed_token.token}, csrf{chat.tokens.generate_csrf()}"
+        "Sec-WebSocket-Protocol": f"wamp, Bearer{(await fixt_testiest()).token.token}, csrf{chat.tokens.generate_csrf()}"
     }
 
 

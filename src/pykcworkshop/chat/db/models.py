@@ -50,13 +50,14 @@ table_room_member = Table(
 """Intermediate table for the many;many room_member relationship between rooms and users."""
 
 
-class HashedToken(BaseModel):
-    """An ORM model representing a hashed JWT."""
+class UserToken(BaseModel):
+    """An ORM model representing a user's login JWT."""
 
-    __tablename__ = "hashed_token"
+    __tablename__ = "user_token"
 
-    id: Mapped[str] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     token: Mapped[str] = mapped_column(unique=True)
+    password_hash: Mapped[str] = mapped_column(unique=True)
     is_revoked: Mapped[bool] = mapped_column(default=False)
 
 
@@ -89,12 +90,10 @@ class User(BaseModel):
     name: Mapped[str] = mapped_column(
         String(constants.NAME_LENGTH, collation="NOCASE"), unique=True
     )
-    hashed_token_id: Mapped[Optional[str]] = mapped_column(
-        ForeignKey("hashed_token.id", onupdate="CASCADE", ondelete="CASCADE")
+    token_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("user_token.id", onupdate="CASCADE", ondelete="CASCADE")
     )
-    hashed_token: Mapped[Optional["HashedToken"]] = relationship(
-        foreign_keys=[hashed_token_id], lazy="selectin"
-    )
+    token: Mapped[Optional["UserToken"]] = relationship(foreign_keys=[token_id], lazy="selectin")
     joined_rooms: Mapped[list["Room"]] = relationship(
         secondary=table_room_member,
         back_populates="members",

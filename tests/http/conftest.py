@@ -70,7 +70,7 @@ async def fixt_http_all_endpoints(request, fixt_test_room):
 @pytest.fixture
 async def fixt_http_headers_testy(fixt_testy):
     return {
-        "Authorization": f"Bearer {(await fixt_testy()).hashed_token.token}",
+        "Authorization": f"Bearer {(await fixt_testy()).token.token}",
         "X-CSRF-TOKEN": chat.tokens.generate_csrf(),
     }
 

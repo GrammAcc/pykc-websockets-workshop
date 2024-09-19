@@ -23,7 +23,7 @@ async def test_join_room_basic_usage(
 
     testiest = await fixt_testiest()
     test_room = await fixt_test_room()
-    auth_headers = {"Authorization": f"Bearer {testiest.hashed_token.token}"}
+    auth_headers = {"Authorization": f"Bearer {testiest.token.token}"}
     auth_headers.update(fixt_http_headers_csrf_only)
     await fixt_client.put(f"/chat/api/v1/room/{test_room.id}/join", headers=auth_headers)
     joined_rooms = (await fixt_testiest()).joined_rooms

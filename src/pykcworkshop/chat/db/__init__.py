@@ -23,7 +23,6 @@ from .sessions import (  # noqa: F401
     create_chat_message,
     create_room,
     create_user,
-    get_jwt_by_hash,
     get_room_by_id,
     get_room_by_name,
     get_session,

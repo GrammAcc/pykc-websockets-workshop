@@ -4,6 +4,7 @@ import datetime
 import os
 import random
 
+import argon2
 import jwt
 
 from pykcworkshop import utils
@@ -62,3 +63,34 @@ def parse_bearer(bearer_token: str) -> str:
     """
 
     return bearer_token.strip()[6:].strip()
+
+
+_ARGON: argon2.PasswordHasher | None = None
+
+
+def pw_hasher() -> argon2.PasswordHasher:
+    """Return a constant PasswordHasher instance with particular argon2id parameters.
+
+    This is returned as a constant in order to avoid the additional timing channel that
+    creating the instance on each use would incur.
+
+    We use three iterations, one thread, and 12 MB of memory per OWASP recommendations:
+      https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html#argon2id
+    See also:
+      https://argon2-cffi.readthedocs.io/en/stable/api.html
+    """
+
+    global _ARGON
+    if _ARGON is None:
+        _ARGON = argon2.PasswordHasher(time_cost=3, memory_cost=12288, parallelism=1)
+    return _ARGON
+
+
+def parse_login_hash(login_hash: str) -> tuple[str, int]:
+    """Parse the token hash and user id from the login string.
+
+    This function can raise exceptions on malformed input.
+    The caller should wrap this in a try-catch block and return a generic 401 on any exception.
+    """
+
+    return login_hash[:40], int(login_hash[40:])

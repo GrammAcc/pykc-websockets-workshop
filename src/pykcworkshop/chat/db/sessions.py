@@ -31,6 +31,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import ConnectionPoolEntry
 
 from pykcworkshop import utils
+from pykcworkshop.chat import tokens
 from pykcworkshop.chat.db import models
 
 load_dotenv()
@@ -76,7 +77,7 @@ async def create_user(
     *,
     user_name: str,
     token_expiration: datetime.timedelta = datetime.timedelta(days=365),
-) -> tuple[models.User, models.HashedToken]:
+) -> tuple[models.User, str]:
     """Create and add a new user to the db.
 
     Returns a 2-tuple containing the newly created user and their token.
@@ -98,11 +99,13 @@ async def create_user(
 
     token_hash = hashlib.sha512(token.encode()).hexdigest()
     shortened_hash = hashlib.sha1(token_hash.encode()).hexdigest()
-    new_hashed_token = models.HashedToken(id=shortened_hash, token=token)
-    session.add(new_hashed_token)
-    new_user.hashed_token = new_hashed_token
+    id_hash = shortened_hash + str(new_user.id)
+    pw_hash = tokens.pw_hasher().hash(shortened_hash)
+    new_user_token = models.UserToken(token=token, password_hash=pw_hash)
+    session.add(new_user_token)
+    new_user.token = new_user_token
 
-    return new_user, new_hashed_token
+    return new_user, id_hash
 
 
 async def create_room(session: AsyncSession, *, room_name: str, creator_id: int) -> models.Room:
@@ -121,11 +124,13 @@ async def create_room(session: AsyncSession, *, room_name: str, creator_id: int)
     shortened_hash = hashlib.sha1(token_hash.encode()).hexdigest()
 
     async with get_session() as local_session:
+        # The add_user_to_room function uses the table interface to add the ids directly, so
+        # we need to commit the room before calling it or we'll get a cryptic FK error.
         new_room = models.Room(id=shortened_hash, name=room_name, owner_id=creator_id)
         local_session.add(new_room)
-        await local_session.commit()  # Commit to populate PK.
+        await local_session.commit()
     session.add(new_room)
-    await add_user_to_room(session, user_id=creator_id, room_id=new_room.id)
+    await add_user_to_room(session, user_id=creator_id, room_id=shortened_hash)
 
     return new_room
 
@@ -158,26 +163,6 @@ async def get_system_user(session: AsyncSession) -> models.User:
     """Fetch the system user from the db."""
 
     stmt = select(models.User).where(models.User.name == "System")
-    return (await session.execute(stmt)).scalar_one()
-
-
-async def get_jwt_by_hash(session: AsyncSession, token_hash: str) -> str:
-    """Fetch the actual jwt token from the db by its hash.
-
-    This also checks that the token hasn't been manually revoked.
-    The `.scalar_one` call will raise a `sqlalchemy.exc.NoResultFound` error if
-    the token is revoked or the provided hash is invalid.
-
-    Important:
-        The returned token string still needs to be validated with the `jwt.decode`
-        function.
-    """
-
-    stmt = (
-        select(models.HashedToken.token)
-        .where(models.HashedToken.id == token_hash)
-        .where(models.HashedToken.is_revoked == False)
-    )
     return (await session.execute(stmt)).scalar_one()
 
 
